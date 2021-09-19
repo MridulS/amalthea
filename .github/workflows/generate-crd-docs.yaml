@@ -1,0 +1,27 @@
+name: Autogenerate the manifests and documentation for the CRD
+
+on:
+  push:
+    branches:
+      - "**"
+      - "!main"
+jobs:
+  generate-crd-docs:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Render chart into manifests
+        run: python3 utils/render-chart-manifests.py
+      - name: Generate CRD documentation
+        uses: SwissDataScienceCenter/renku-actions/generate-crd-docs@3d6f5abf79b61d969b0d958e42dabb4e9f15392c
+        env:
+          RESOURCES: ./manifests/crd.yaml
+          OUTPUT: ./docs/crd.md
+      - name: Push changes to branch
+        run: |
+          git config --global user.name '${{ github.actor }}'
+          git config --global user.email '${{ github.actor }}@users.noreply.github.com>'
+          git commit -am "chore(docs): update manifests and CRD docs" || true
+          git push || true
